@@ -136,6 +136,7 @@ def test_detect_no_marginal_when_no_boost(fasta_file):
 def test_detect_delta_values_correct(fasta_file):
     from evotracex.alignment import MSA
     from evotracex.subsets import Clade
+    import math as _math
 
     msa = MSA(fasta_file)
     leaf = Clade(msa, [0], label="seqA")
@@ -144,7 +145,8 @@ def test_detect_delta_values_correct(fasta_file):
     results = detect_marginal_conservation(std, exp, msa, leaf)
     for r in results:
         col = r.position - 1
-        expected_delta = std[col] - exp[col]
+        s, e = std[col], exp[col]
+        expected_delta = _math.atan((s - e) / (s + e))
         assert math.isclose(r.delta, expected_delta, abs_tol=1e-10)
 
 

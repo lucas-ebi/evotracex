@@ -6,14 +6,19 @@ stereochemical properties — a signature of marginal conservation.
 
 Algorithm
 ---------
-For each alignment column i, compute:
+For each alignment column i, compute the angle below the diagonal in the
+(score_standard, score_expanded) plane:
 
-    Δᵢ = score_standard_i - score_expanded_i
+    Δᵢ = arctan((score_standard_i - score_expanded_i) / (score_standard_i + score_expanded_i))
 
-A positive Δ means the position scored *lower* (i.e., more conserved) only after
-expansion.  Δᵢ is normalised across all positions to produce a Z-score, from
-which a one-tailed p-value is derived.  Benjamini-Hochberg FDR correction is
-applied across all positions to account for multiple testing.
+This is the angle between the vector (score_standard_i, score_expanded_i) and
+the 45° diagonal, independent of the vector's magnitude.  A positive Δ means
+the point lies below the diagonal — i.e., the position scores lower (more
+conserved) only after expansion, regardless of its absolute score level.
+
+Δᵢ is normalised across all positions to produce a Z-score, from which a
+one-tailed p-value is derived.  Benjamini-Hochberg FDR correction is applied
+across all positions to account for multiple testing.
 
 A position is called *marginally conserved* when Δᵢ > 0 and the BH-corrected
 p-value is below the chosen FDR threshold.
@@ -73,10 +78,9 @@ def detect_marginal_conservation(
     positions = sorted(ranking_standard)
     leaf_seq = msa.sequences[msa.sequence_indices[leaf.label]]
 
-    deltas = np.array([
-        ranking_standard[col] - ranking_expanded[col]
-        for col in positions
-    ])
+    s = np.array([ranking_standard[col] for col in positions])
+    e = np.array([ranking_expanded[col] for col in positions])
+    deltas = np.arctan((s - e) / (s + e))
 
     mu = float(np.mean(deltas))
     sigma = float(np.std(deltas, ddof=1)) if len(deltas) > 1 else 0.0

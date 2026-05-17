@@ -78,7 +78,7 @@ position    residue    score_standard    score_expanded    delta    z_score    p
 
 | Column | Meaning |
 | --- | --- |
-| `delta` | `score_standard − score_expanded` — positive means expansion helped |
+| `delta` | `arctan((score_standard − score_expanded) / (score_standard + score_expanded))` — angle below the score diagonal in radians; positive means expansion helped, scale-invariant |
 | `z_score` | Standardised delta across all positions for this leaf |
 | `p_value` | One-tailed p-value (upper tail) from the Z-score |
 | `adj_p_value` | Benjamini-Hochberg FDR corrected p-value |
