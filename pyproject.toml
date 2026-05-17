@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evotracex"
+version = "0.2.0"
+requires-python = ">=3.10"
+dependencies = [
+    "biopython>=1.80",
+    "numpy>=1.24",
+    "networkx>=3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+evotracex = "evotracex.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["evotracex*"]
