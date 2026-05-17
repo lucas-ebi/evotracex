@@ -31,20 +31,21 @@ evotracex <msa.fasta> <tree.nwk> [OPTIONS]
 | `-o/--out PREFIX` | stdout | Write results to `PREFIX_et_ranking.tsv` (or `PREFIX_marginal.tsv`) |
 | `-x/--plus-aa` | off | Enable alphabet expansion (stereochemical groupings) |
 | `--d0 FLOAT` | `0.05` | Gaussian bandwidth for subfamily weighting |
-| `--leaf NAME` | all leaves | Analyse one named leaf only |
+| `--ref NAME` | first sequence | Reference sequence for analysis and position numbering (must match an MSA header exactly). Restricts output to this sequence; alignment columns where it has a gap are omitted. |
 | `--marginal` | off | Detect marginally conserved positions (see below) |
 | `--fdr FLOAT` | `0.05` | Benjamini-Hochberg FDR threshold for marginal calls |
 
 ### Standard ET ranking
 
-Ranks every alignment column by functional importance relative to each leaf sequence.
+Ranks every alignment column by functional importance relative to the reference sequence.
+Positions are numbered by residues in the reference (gaps excluded).
 
 ```bash
-evotracex alignment.fasta tree.nwk --plus-aa --d0 0.1 --out results
+evotracex alignment.fasta tree.nwk --ref seqA --plus-aa --d0 0.1 --out results
 # → results_et_ranking.tsv
 ```
 
-Output — one block per leaf, lower score = more important, gap positions omitted:
+Output — lower score = more important:
 
 ```text
 # seqA
@@ -61,11 +62,11 @@ position by position. Positions whose score drops significantly when the expande
 alphabet is applied are flagged as marginally conserved.
 
 ```bash
-evotracex alignment.fasta tree.nwk --marginal --fdr 0.05 --out results
+evotracex alignment.fasta tree.nwk --ref seqA --marginal --fdr 0.05 --out results
 # → results_marginal.tsv
 ```
 
-Output — one block per leaf:
+Output:
 
 ```text
 # seqA
