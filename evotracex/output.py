@@ -6,6 +6,7 @@ from pathlib import Path
 from Bio.SeqUtils import seq3
 
 from evotracex.alignment import MSA
+from evotracex.marginal import MarginalResult
 from evotracex.subsets import Clade
 
 
@@ -42,6 +43,43 @@ def write_ranking(
         sys.stdout.write(text)
     else:
         path = Path(str(out) + "_et_ranking.tsv")
+        mode = "a" if path.exists() else "w"
+        with path.open(mode) as fh:
+            fh.write(f"# {leaf.label}\n")
+            fh.write(text)
+
+
+def write_marginal_ranking(
+    results: list[MarginalResult],
+    leaf: Clade,
+    out: Path | None = None,
+) -> None:
+    """Write the marginal conservation table for *leaf* as a TSV.
+
+    Rows are sorted by delta descending (largest improvement from expansion first).
+    Only non-gap positions are included. Output goes to *out*_marginal.tsv when
+    *out* is given, otherwise to stdout.
+    """
+    header = "\t".join([
+        "position", "residue",
+        "score_standard", "score_expanded", "delta",
+        "z_score", "p_value", "adj_p_value", "marginal",
+    ])
+    lines = [header]
+    for r in results:
+        lines.append(
+            f"{r.position}\t{seq3(r.amino_acid)}\t"
+            f"{r.score_standard:.6f}\t{r.score_expanded:.6f}\t{r.delta:.6f}\t"
+            f"{r.z_score:.4f}\t{r.p_value:.4e}\t{r.adj_p_value:.4e}\t"
+            f"{'TRUE' if r.marginal else 'FALSE'}"
+        )
+    text = "\n".join(lines) + "\n"
+
+    if out is None:
+        sys.stdout.write(f"# {leaf.label}\n")
+        sys.stdout.write(text)
+    else:
+        path = Path(str(out) + "_marginal.tsv")
         mode = "a" if path.exists() else "w"
         with path.open(mode) as fh:
             fh.write(f"# {leaf.label}\n")
