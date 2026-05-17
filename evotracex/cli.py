@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import itertools
 import sys
+import time
 from pathlib import Path
+from typing import Callable
 
 from evotracex.alignment import MSA
 from evotracex.marginal import detect_marginal_conservation
@@ -55,10 +58,12 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="FLOAT",
     )
     parser.add_argument(
-        "--leaf",
+        "--ref",
         help=(
-            "Run analysis for this leaf only (must match an MSA header exactly). "
-            "By default all leaves are analysed."
+            "Reference sequence for analysis and position numbering "
+            "(must match an MSA header exactly). "
+            "Restricts output to this sequence; alignment columns where it has "
+            "a gap are omitted. Defaults to the first sequence in the MSA."
         ),
         type=str,
         default=None,
@@ -85,31 +90,88 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+_SPINNER = list("|/-\\")
+_BAR_WIDTH = 28
+
+
+def _log(msg: str) -> None:
+    sys.stderr.write(msg + "\n")
+    sys.stderr.flush()
+
+
+def _make_progress(label: str) -> Callable[[int, int], None]:
+    spinner = itertools.cycle(_SPINNER)
+
+    def _callback(current: int, total: int) -> None:
+        pct = current / total
+        filled = int(_BAR_WIDTH * pct)
+        bar = "█" * filled + "░" * (_BAR_WIDTH - filled)
+        sys.stderr.write(f"\r  {next(spinner)} {label}  [{bar}] {current}/{total}")
+        sys.stderr.flush()
+
+    return _callback
+
+
+def _end_progress() -> None:
+    sys.stderr.write("\n")
+    sys.stderr.flush()
+
+
 def main() -> None:
     args = build_parser().parse_args()
     out = Path(args.out) if args.out else None
 
+    t0 = time.perf_counter()
     if args.marginal:
         _run_marginal(args, out)
     else:
         _run_standard(args, out)
+    _log(f"Done in {time.perf_counter() - t0:.1f}s.")
+
+
+def _build_ref_pos_map(msa: MSA, ref_label: str) -> dict[int, int]:
+    if ref_label not in msa.sequence_indices:
+        sys.exit(
+            f"Reference sequence '{ref_label}' not found. "
+            f"Available: {sorted(msa.sequence_indices)}"
+        )
+    ref_idx = msa.sequence_indices[ref_label]
+    ref_seq = msa.sequences[ref_idx]
+    pos = 0
+    ref_pos_map: dict[int, int] = {}
+    for col, aa in enumerate(ref_seq):
+        if aa != "-":
+            pos += 1
+            ref_pos_map[col] = pos
+    return ref_pos_map
 
 
 def _run_standard(args: argparse.Namespace, out: Path | None) -> None:
+    _log("Loading MSA and tree…")
     try:
         msa = MSA(args.msa_file, plus_aa=args.plus_aa)
         graph, root, leaves = build_clade_network(msa, args.tree_file)
         groups = build_groups(graph, root)
     except (ValueError, SystemExit) as exc:
         sys.exit(str(exc))
+    _log(f"  {msa.size} sequences · {msa.length} columns · {len(leaves)} leaves")
 
-    target_leaves = _select_leaves(leaves, args.leaf)
+    ref = args.ref or msa.headers[0]
+    ref_pos_map = _build_ref_pos_map(msa, ref)
+    _log(f"  reference: {ref} ({len(ref_pos_map)} residues / {msa.length} alignment columns)")
+    target_leaves = _select_leaves(leaves, ref)
     for leaf in target_leaves:
-        ranking = evolutionary_trace(msa, graph, groups, root, leaf, d0=args.d0)
-        write_ranking(ranking, msa, leaf, out)
+        _log(f"Running ET for {leaf.label}…")
+        ranking = evolutionary_trace(
+            msa, graph, groups, root, leaf, d0=args.d0,
+            progress=_make_progress("ET"),
+        )
+        _end_progress()
+        write_ranking(ranking, msa, leaf, out, ref_pos_map=ref_pos_map)
 
 
 def _run_marginal(args: argparse.Namespace, out: Path | None) -> None:
+    _log("Loading MSA and tree…")
     try:
         msa_std = MSA(args.msa_file, plus_aa=False)
         msa_exp = MSA(args.msa_file, plus_aa=True)
@@ -119,31 +181,40 @@ def _run_marginal(args: argparse.Namespace, out: Path | None) -> None:
         groups_exp = build_groups(graph_exp, root_exp)
     except (ValueError, SystemExit) as exc:
         sys.exit(str(exc))
+    _log(f"  {msa_std.size} sequences · {msa_std.length} columns · {len(leaves_std)} leaves")
 
+    ref = args.ref or msa_std.headers[0]
+    ref_pos_map = _build_ref_pos_map(msa_std, ref)
+    _log(f"  reference: {ref} ({len(ref_pos_map)} residues / {msa_std.length} alignment columns)")
     leaves_exp_by_label = {lf.label: lf for lf in leaves_exp}
-    target_std = _select_leaves(leaves_std, args.leaf)
+    target_std = _select_leaves(leaves_std, ref)
 
     for leaf_std in target_std:
+        _log(f"Running ET for {leaf_std.label}…")
         leaf_exp = leaves_exp_by_label[leaf_std.label]
         ranking_std = evolutionary_trace(
-            msa_std, graph_std, groups_std, root_std, leaf_std, d0=args.d0
+            msa_std, graph_std, groups_std, root_std, leaf_std, d0=args.d0,
+            progress=_make_progress("standard"),
         )
+        _end_progress()
         ranking_exp = evolutionary_trace(
-            msa_exp, graph_exp, groups_exp, root_exp, leaf_exp, d0=args.d0
+            msa_exp, graph_exp, groups_exp, root_exp, leaf_exp, d0=args.d0,
+            progress=_make_progress("expanded"),
         )
+        _end_progress()
         results = detect_marginal_conservation(
             ranking_std, ranking_exp, msa_std, leaf_std, fdr=args.fdr
         )
-        write_marginal_ranking(results, leaf_std, out)
+        write_marginal_ranking(results, leaf_std, out, ref_pos_map=ref_pos_map)
 
 
-def _select_leaves(leaves: list, label: str | None) -> list:
-    if label is None:
+def _select_leaves(leaves: list, ref: str | None) -> list:
+    if ref is None:
         return leaves
-    matching = [lf for lf in leaves if lf.label == label]
+    matching = [lf for lf in leaves if lf.label == ref]
     if not matching:
         sys.exit(
-            f"Leaf '{label}' not found. "
+            f"Reference sequence '{ref}' not found. "
             f"Available: {sorted(lf.label for lf in leaves)}"
         )
     return matching

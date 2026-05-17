@@ -15,12 +15,16 @@ def write_ranking(
     msa: MSA,
     leaf: Clade,
     out: Path | None = None,
+    ref_pos_map: dict[int, int] | None = None,
 ) -> None:
     """Write the ET ranking for *leaf* as a TSV table.
 
     Columns are written in ascending score order (most important first).
-    Gap positions are skipped. Output goes to *out*_et_ranking.tsv when
-    *out* is given, otherwise to stdout.
+    Gap positions (in the leaf sequence) are skipped.  When *ref_pos_map*
+    is provided, positions are numbered by the reference sequence and
+    columns where the reference has a gap are also skipped.
+    Output goes to *out*_et_ranking.tsv when *out* is given, otherwise
+    to stdout.
     """
     leaf_seq = msa.sequences[msa.sequence_indices[leaf.label]]
 
@@ -28,9 +32,13 @@ def write_ranking(
     rank = 1
     for col, score in sorted(ranking.items(), key=lambda x: x[1]):
         aa = leaf_seq[col]
-        if aa != "-":
-            rows.append((rank, seq3(aa), col + 1, score))
-            rank += 1
+        if aa == "-":
+            continue
+        if ref_pos_map is not None and col not in ref_pos_map:
+            continue
+        position = ref_pos_map[col] if ref_pos_map is not None else col + 1
+        rows.append((rank, seq3(aa), position, score))
+        rank += 1
 
     header = "\t".join(["rank", "residue", "position", "score"])
     lines = [header] + [
@@ -53,12 +61,15 @@ def write_marginal_ranking(
     results: list[MarginalResult],
     leaf: Clade,
     out: Path | None = None,
+    ref_pos_map: dict[int, int] | None = None,
 ) -> None:
     """Write the marginal conservation table for *leaf* as a TSV.
 
     Rows are sorted by delta descending (largest improvement from expansion first).
-    Only non-gap positions are included. Output goes to *out*_marginal.tsv when
-    *out* is given, otherwise to stdout.
+    Only non-gap positions are included.  When *ref_pos_map* is provided,
+    positions are numbered by the reference sequence and columns where the
+    reference has a gap are omitted.
+    Output goes to *out*_marginal.tsv when *out* is given, otherwise to stdout.
     """
     header = "\t".join([
         "position", "residue",
@@ -67,8 +78,12 @@ def write_marginal_ranking(
     ])
     lines = [header]
     for r in results:
+        col = r.position - 1
+        if ref_pos_map is not None and col not in ref_pos_map:
+            continue
+        position = ref_pos_map[col] if ref_pos_map is not None else r.position
         lines.append(
-            f"{r.position}\t{seq3(r.amino_acid)}\t"
+            f"{position}\t{seq3(r.amino_acid)}\t"
             f"{r.score_standard:.6f}\t{r.score_expanded:.6f}\t{r.delta:.6f}\t"
             f"{r.z_score:.4f}\t{r.p_value:.4e}\t{r.adj_p_value:.4e}\t"
             f"{'TRUE' if r.marginal else 'FALSE'}"

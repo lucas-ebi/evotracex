@@ -188,10 +188,10 @@ def test_cli_marginal_writes_tsv(fasta_file, tree_file, tmp_path):
     assert "position\tresidue\tscore_standard\tscore_expanded\tdelta" in content
 
 
-def test_cli_marginal_leaf_flag(fasta_file, tree_file, capsys):
+def test_cli_marginal_ref_flag(fasta_file, tree_file, capsys):
     import sys
     from evotracex.cli import main
-    sys.argv = ["evotracex", fasta_file, tree_file, "--marginal", "--leaf", "seqA"]
+    sys.argv = ["evotracex", fasta_file, tree_file, "--marginal", "--ref", "seqA"]
     main()
     out = capsys.readouterr().out
     assert "seqA" in out
@@ -201,7 +201,7 @@ def test_cli_marginal_leaf_flag(fasta_file, tree_file, capsys):
 def test_cli_marginal_fdr_flag_accepted(fasta_file, tree_file, capsys):
     import sys
     from evotracex.cli import main
-    sys.argv = ["evotracex", fasta_file, tree_file, "--marginal", "--fdr", "0.1", "--leaf", "seqA"]
+    sys.argv = ["evotracex", fasta_file, tree_file, "--marginal", "--fdr", "0.1", "--ref", "seqA"]
     main()
     out = capsys.readouterr().out
     assert "position" in out
