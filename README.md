@@ -4,7 +4,7 @@ EvoTraceX implements **Evolutionary Trace (ET) with optional alphabet expansion*
 
 Given a multiple sequence alignment (MSA) and a phylogenetic tree, it ranks each alignment column by how well its variation mirrors the tree's branching pattern. Residues that are conserved within subfamilies but differ between them are highlighted as likely determinants of functional specificity.
 
-The alphabet expansion (`--plus-aa`) groups amino acids by stereochemical properties (e.g., Aliphatic, Aromatic, Hydrophilic), boosting sensitivity at positions where chemical character is conserved even when the exact residue is not.
+The alphabet expansion (`--plus-aa`) groups amino acids by stereochemical properties (e.g., Aliphatic, Aromatic, Hydrophilic), boosting sensitivity at positions where physicochemical property is conserved even when the exact residue is not.
 
 The marginal conservation mode (`--marginal`) automatically compares standard and expanded rankings to pinpoint positions that only emerge as conserved under the expanded alphabet — the defining signature of marginal conservation.
 
