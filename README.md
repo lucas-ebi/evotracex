@@ -94,7 +94,7 @@ pytest tests/ -v
 
 ## Scientific background
 
-The method is based on the Evolutionary Trace approach (Lichtarge et al. 1996), which uses a phylogenetic tree to partition sequences into nested subfamilies and identifies positions whose conservation pattern mirrors the tree topology. The alphabet expansion is described in the X-ET extension (Carrijo de Oliveira 2018), which replaces single-residue conservation with stereochemical-group conservation to capture marginally conserved sites. The marginal conservation detection introduced here formalises this comparison using a Z-score framework with Benjamini-Hochberg multiple-testing correction.
+The method is based on the Evolutionary Trace approach (Lichtarge et al. 1996), which uses a phylogenetic tree to partition sequences into nested subfamilies and identifies positions whose conservation pattern mirrors the tree topology. The alphabet expansion extends its functionality by replacing single-residue conservation with stereochemical-group conservation to capture marginally conserved sites. The marginal conservation detection introduced here formalises this comparison using a Z-score framework with Benjamini-Hochberg multiple-testing correction.
 
 ## License
 
