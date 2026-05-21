@@ -157,6 +157,17 @@ Fully conserved, gap-free columns give $S = 0$; a fully gapped column gives $S =
 - Henikoff S, Henikoff JG. (1994). Position-based sequence weights. *J Mol Biol*, 243(4), 574–578. <https://doi.org/10.1016/0022-2836(94)90032-9>
 - Taylor WR. (1986). The classification of amino acid conservation. *J Theor Biol*, 119(2), 205–218. <https://doi.org/10.1016/S0022-5193(86)80075-3>
 
+## Citation
+
+If you use this tool in your research, please cite the original software and the associated publication (if any). The original module was developed by **Lucas Carrijo de Oliveira** (<lucas@ebi.ac.uk>). For now, you may reference the repository directly:
+
+```text
+Lucas C. de Oliveira. EvoTraceX. 2026.
+https://github.com/lucas-ebi/evotracex
+```
+
+A formal publication is in preparation; check the repository for updates.
+
 ## License
 
 GNU General Public License v3. See [LICENSE](LICENSE).
