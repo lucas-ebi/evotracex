@@ -58,7 +58,7 @@ class Subset:
     def entropy(self, position: int) -> float:
         """Gap-corrected Shannon entropy at *position* for sequences in this subset.
 
-        When msa.plus_aa is True, a greedy set cover selects the minimal set of
+        When msa.expand is True, a greedy set cover selects the minimal set of
         non-overlapping stereochemical groups that spans all amino acids present,
         matching the original X-ET alphabet-expansion behaviour.
         """
@@ -69,7 +69,7 @@ class Subset:
         if not K:
             return math.log(20)
 
-        if self.msa.plus_aa:
+        if self.msa.expand:
             content = {
                 self.msa.sequences[i][position] for i in self.sequence_indices
             }

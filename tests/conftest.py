@@ -54,4 +54,4 @@ def msa(fasta_file):
 @pytest.fixture
 def msa_plus(fasta_file):
     from evotracex.alignment import MSA
-    return MSA(fasta_file, plus_aa=True)
+    return MSA(fasta_file, expand=True)

@@ -42,7 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
     )
     parser.add_argument(
-        "-x", "--plus-aa",
+        "-x", "--expand",
         help="Expand the amino-acid alphabet using stereochemical groupings.",
         action="store_true",
         default=False,
@@ -75,7 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Detect marginally conserved positions by comparing ET rankings "
             "with and without alphabet expansion. Runs both analyses automatically "
             "and applies Benjamini-Hochberg FDR correction. "
-            "Writes <out>_marginal.tsv (or stdout). Implies --plus-aa."
+            "Writes <out>_marginal.tsv (or stdout). Implies --expand."
         ),
         action="store_true",
         default=False,
@@ -149,7 +149,7 @@ def _build_ref_pos_map(msa: MSA, ref_label: str) -> dict[int, int]:
 def _run_standard(args: argparse.Namespace, out: Path | None) -> None:
     _log("Loading MSA and tree…")
     try:
-        msa = MSA(args.msa_file, plus_aa=args.plus_aa)
+        msa = MSA(args.msa_file, expand=args.expand)
         graph, root, leaves = build_clade_network(msa, args.tree_file)
         groups = build_groups(graph, root)
     except (ValueError, SystemExit) as exc:
@@ -173,8 +173,8 @@ def _run_standard(args: argparse.Namespace, out: Path | None) -> None:
 def _run_marginal(args: argparse.Namespace, out: Path | None) -> None:
     _log("Loading MSA and tree…")
     try:
-        msa_std = MSA(args.msa_file, plus_aa=False)
-        msa_exp = MSA(args.msa_file, plus_aa=True)
+        msa_std = MSA(args.msa_file, expand=False)
+        msa_exp = MSA(args.msa_file, expand=True)
         graph_std, root_std, leaves_std = build_clade_network(msa_std, args.tree_file)
         graph_exp, root_exp, leaves_exp = build_clade_network(msa_exp, args.tree_file)
         groups_std = build_groups(graph_std, root_std)

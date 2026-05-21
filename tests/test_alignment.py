@@ -54,7 +54,7 @@ def test_collection_variable_column(msa):
     assert len(col6) == 5
 
 
-def test_collection_plus_aa_adds_groups(msa, msa_plus):
+def test_collection_expand_adds_groups(msa, msa_plus):
     # Alphabet expansion should add at least one multi-residue group somewhere
     any_multi = any(
         any(len(r.amino_acids) > 1 for r in msa_plus.collection[col])

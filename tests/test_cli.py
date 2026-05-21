@@ -55,8 +55,8 @@ def test_cli_out_tsv_columns(fasta_file, tree_file, tmp_path):
     assert "rank\tresidue\tposition\tscore" in content
 
 
-def test_cli_plus_aa_flag_accepted(fasta_file, tree_file, capsys):
-    _run_main([fasta_file, tree_file, "--plus-aa", "--ref", "seqA"])
+def test_cli_expand_flag_accepted(fasta_file, tree_file, capsys):
+    _run_main([fasta_file, tree_file, "--expand", "--ref", "seqA"])
     out = capsys.readouterr().out
     assert "seqA" in out
 

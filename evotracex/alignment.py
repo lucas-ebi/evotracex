@@ -10,8 +10,8 @@ from evotracex.subsets import Residue
 class MSA:
     """Multiple Sequence Alignment with Henikoff weights and residue collection."""
 
-    def __init__(self, msa_file: str, plus_aa: bool = False) -> None:
-        self.plus_aa = plus_aa
+    def __init__(self, msa_file: str, expand: bool = False) -> None:
+        self.expand = expand
         records = self._parse(msa_file)
         self.headers, self.sequences = self._read(records)
         self.size, self.length = self.sequences.shape
@@ -55,7 +55,7 @@ class MSA:
                 if indices:
                     collection[col].append(Residue(self, [aa], col, indices))
 
-        if self.plus_aa:
+        if self.expand:
             for col in range(self.length):
                 col_chars = set(self.sequences[:, col])
 
